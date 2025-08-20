@@ -11,13 +11,29 @@ pipeline {
   stages {
     stage('Run JMeter') {
       steps {
-        sh '''#!/bin/bash
-set -euxo pipefail
+        sh 'set -euxo pipefail'
+        // Find JMeter path and store it
+        sh 'if command -v jmeter >/dev/null 2>&1; then echo $(command -v jmeter) > jm_path.txt; elif [ -x /opt/homebrew/bin/jmeter ]; then echo /opt/homebrew/bin/jmeter > jm_path.txt; elif [ -x /usr/local/bin/jmeter ]; then echo /usr/local/bin/jmeter > jm_path.txt; else echo "JMeter not found. Install with: brew install jmeter" ; exit 1; fi'
 
-# Find JMeter on this Mac
-JMETER="$(command -v jmeter || true)"
-if [ -z "$JMETER" ]; then
-  if [ -x /opt/homebrew/bin/jmeter ]; then JMETER=/opt/homebrew/bin/jmeter
-  elif [ -x /usr/local/bin/jmeter ]; then JMETER=/usr/local/bin/jmeter
-  else
-    echo "JMeter not found
+        sh 'rm -rf report results.jtl || true'
+        sh 'mkdir -p report'
+
+        // Run the test
+        sh '"$(cat jm_path.txt)" -n -t example_test.jmx -Jthreads="$THREADS" -Jramp="$RAMP" -Jloops="$LOOPS" -l results.jtl'
+
+        // Generate HTML dashboard if not already created
+        sh '[ -f report/index.html ] || "$(cat jm_path.txt)" -g results.jtl -o report'
+
+        // Debug listings (helpful if you don’t see report/)
+        sh 'echo "=== Workspace ==="; ls -lah; echo "=== report/ ==="; ls -lah report || true'
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
+      echo 'Open: Build → Artifacts → report → index.html'
+    }
+  }
+}
