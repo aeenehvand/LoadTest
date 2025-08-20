@@ -39,3 +39,6 @@ mkdir -p report
     always {
       archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
       echo 'Open the HTML via Artifacts → report/index.html'
+    }
+  }
+}
