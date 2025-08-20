@@ -1,0 +1,10 @@
+# JMeter outputs
+report/
+results.jtl
+*.jtl
+*.log
+*.tmp
+
+# macOS & editor
+.DS_Store
+.vscode/

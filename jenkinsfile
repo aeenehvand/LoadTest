@@ -1,0 +1,35 @@
+pipeline {
+  agent any
+  options { timestamps() }
+
+  stages {
+    stage('Run JMeter') {
+      steps {
+        sh '''
+          rm -rf report results.jtl || true
+          mkdir -p report
+          jmeter -n -t example_test.jmx -l results.jtl -e -o report
+        '''
+      }
+    }
+
+    stage('Archive Report') {
+      steps {
+        archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
+        script {
+          try {
+            publishHTML(target: [
+              reportDir: 'report',
+              reportFiles: 'index.html',
+              reportName: 'JMeter Report',
+              keepAll: true,
+              alwaysLinkToLastBuild: true
+            ])
+          } catch (ignored) {
+            echo 'HTML Publisher plugin not installed — artifacts archived only.'
+          }
+        }
+      }
+    }
+  }
+}
