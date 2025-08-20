@@ -30,6 +30,11 @@ mkdir -p report
 "$JMETER" -n -t example_test.jmx \
   -Jthreads="$THREADS" -Jramp="$RAMP" -Jloops="$LOOPS" \
   -l results.jtl -e -o report
+
+echo "=== Workspace after run ==="
+ls -lah
+echo "=== Report dir ==="
+ls -lah report || true
 '''
       }
     }
@@ -38,7 +43,7 @@ mkdir -p report
   post {
     always {
       archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
-      echo 'Open the HTML via Artifacts → report/index.html'
+      echo 'Open the HTML via Artifacts → report → index.html'
     }
   }
 }
