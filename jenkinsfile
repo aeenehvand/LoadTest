@@ -1,5 +1,10 @@
 pipeline {
-  agent any
+  agent {
+    docker {
+      image 'justb4/jmeter:5.6.3'
+      args '-u root:root'
+    }
+  }
   options { timestamps() }
 
   stages {
@@ -12,22 +17,22 @@ pipeline {
         '''
       }
     }
+  }
 
-    stage('Archive Report') {
-      steps {
-        archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
-        script {
-          try {
-            publishHTML(target: [
-              reportDir: 'report',
-              reportFiles: 'index.html',
-              reportName: 'JMeter Report',
-              keepAll: true,
-              alwaysLinkToLastBuild: true
-            ])
-          } catch (ignored) {
-            echo 'HTML Publisher plugin not installed — artifacts archived only.'
-          }
+  post {
+    always {
+      archiveArtifacts artifacts: 'results.jtl, report/**', fingerprint: true
+      script {
+        try {
+          publishHTML(target: [
+            reportDir: 'report',
+            reportFiles: 'index.html',
+            reportName: 'JMeter Report',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+          ])
+        } catch (ignored) {
+          echo 'HTML Publisher plugin not installed — artifacts archived only.'
         }
       }
     }
